@@ -25,8 +25,8 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User getUser(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
+    public User getUser(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     public MessageResponse update(UpdateDto body, Long id){

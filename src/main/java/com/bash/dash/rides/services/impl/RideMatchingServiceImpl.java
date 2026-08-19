@@ -1,10 +1,11 @@
 package com.bash.dash.rides.services.impl;
 
-import com.bash.dash.domain.Driver;
+import com.bash.dash.domain.DriverProfile;
+import com.bash.dash.domain.RiderProfile;
 import com.bash.dash.location.repositories.LocationRepository;
 import com.bash.dash.location.models.Location;
 import com.bash.dash.domain.User;
-import com.bash.dash.drivers.repositories.DriverRepository;
+import com.bash.dash.drivers.repositories.DriverProfileRepository;
 import com.bash.dash.users.repositories.UserRepository;
 import com.bash.dash.authentication.models.CustomUserDetails;
 import com.bash.dash.rides.dtos.RideRequestDto;
@@ -27,13 +28,13 @@ public class RideMatchingServiceImpl implements RideMatchingService {
 
     private final RideRepository rideRepository;
     private final UserRepository userRepository;
-    private final DriverRepository driverRepository;
+    private final DriverProfileRepository driverProfileRepository;
     private final LocationRepository locationRepository;
 
-    public RideMatchingServiceImpl(RideRepository rideRepository, UserRepository userRepository, DriverRepository driverRepository, LocationRepository locationRepository) {
+    public RideMatchingServiceImpl(RideRepository rideRepository, UserRepository userRepository, DriverProfileRepository driverProfileRepository, LocationRepository locationRepository) {
         this.rideRepository = rideRepository;
         this.userRepository = userRepository;
-        this.driverRepository = driverRepository;
+        this.driverProfileRepository = driverProfileRepository;
         this.locationRepository = locationRepository;
     }
 
@@ -60,7 +61,6 @@ public class RideMatchingServiceImpl implements RideMatchingService {
         User user = userRepository.findById(getId()).orElseThrow(() -> new RuntimeException("User not found"));
         Location location = new Location(lat, lng);
         locationRepository.save(location);
-        user.setLocation(location);
         userRepository.save(user);
         return new MessageResponse("User location updated");
     }
@@ -69,12 +69,13 @@ public class RideMatchingServiceImpl implements RideMatchingService {
     public MessageResponse requestRide(RideRequestDto body) {
         log.info(String.valueOf(body));
 
+        RiderProfile riderProfile = new RiderProfile();
         Location origin = body.origin();
         Location destination = body.destination();
         locationRepository.save(origin);
         locationRepository.save(destination);
         Ride ride = new Ride();
-        ride.setUserId(getId());
+        ride.setRiderProfile(riderProfile);
         ride.setOrigin(origin);
         ride.setDestination(destination);
         rideRepository.save(ride);
@@ -84,7 +85,7 @@ public class RideMatchingServiceImpl implements RideMatchingService {
     @Override
     public MessageResponse acceptRide(String  rideIdStr, boolean accept) {
         UUID rideId = UUID.fromString(rideIdStr);
-        Driver driver = driverRepository.findById(getId()).orElseThrow(() -> new RuntimeException("Could not driver."));
+//        Driver driver = driverProfileRepository.findById(getId()).orElseThrow(() -> new RuntimeException("Could not driver."));
         Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new RuntimeException("Ride is unavailable"));
         if (!ride.isAvailable()){
@@ -92,10 +93,10 @@ public class RideMatchingServiceImpl implements RideMatchingService {
         }
         if (accept){
             ride.setAvailable(false);
-            ride.setDriverId(getId());
+//            ride.setDriverId(getId());
             ride.setStatus(Status.ACCEPTED);
             rideRepository.save(ride);
-            driver.setAvailable(false);
+//            driver.setAvailable(false);
             return new MessageResponse("Ride accepted");
         }
         return new MessageResponse("Ride declined");
@@ -103,14 +104,14 @@ public class RideMatchingServiceImpl implements RideMatchingService {
 
     @Override
     public MessageResponse toggleAvailable() {
-        Driver driver = (Driver) userRepository.findById(getId()).orElseThrow(() -> new RuntimeException("User not found"));
+        DriverProfile driver = driverProfileRepository.findById(getId()).orElseThrow(() -> new RuntimeException("User not found"));
         Ride lastRide = driver.getRides().getLast();
         if (lastRide.getStatus() == Status.ACCEPTED || lastRide.getStatus() == Status.EN_ROUTE || lastRide.getStatus() ==Status.IN_TRANSIT ){
             return new MessageResponse("Driver is in transit");
         }
 
         driver.setAvailable(!driver.isAvailable());
-        driverRepository.save(driver);
+        driverProfileRepository.save(driver);
         return new MessageResponse("User availability toggled.");
     }
 
@@ -119,9 +120,9 @@ public class RideMatchingServiceImpl implements RideMatchingService {
 
         UUID id = UUID.fromString(rideId);
         Ride ride = rideRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
-        Driver driver = (Driver) userRepository.findById(ride.getDriverId()).orElseThrow(() -> new RuntimeException("User not found"));
+        DriverProfile driver = driverProfileRepository.findById(ride.getDriverProfile().getId()).orElseThrow(() -> new RuntimeException("User not found"));
         driver.setAvailable(true);
-        driverRepository.save(driver);
+        driverProfileRepository.save(driver);
         return new  MessageResponse("Ride has been completed successfully");
     }
 
@@ -129,7 +130,7 @@ public class RideMatchingServiceImpl implements RideMatchingService {
     public MessageResponse cancelRide(String rideIdStr){
         UUID rideId = UUID.fromString(rideIdStr);
         Ride ride = rideRepository.findById(rideId).orElseThrow(() -> new RuntimeException("Ride not found"));
-        Driver driver = driverRepository.findById(ride.getDriverId()).orElseThrow(() -> new RuntimeException("Driver does not exist"));
+        DriverProfile driver = driverProfileRepository.findById(ride.getDriverProfile().getId()).orElseThrow(() -> new RuntimeException("Driver does not exist"));
         driver.setAvailable(true);
         ride.setAvailable(false);
         ride.setStatus(Status.CANCELLED);

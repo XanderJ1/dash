@@ -10,8 +10,7 @@ public record RegisterDto(
     String phone,
     String password,
     String role,
-    String address,
-    Document document
+    String address
 ) {
 public RegisterDto(User user){
     this(
@@ -21,8 +20,7 @@ public RegisterDto(User user){
             user.getPhone(),
             user.getPassword(),
             user.getAddress(),
-            user.getAddress(),
-            user.getDocument()
+            user.getAddress()
     );
 }
 }

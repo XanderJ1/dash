@@ -4,7 +4,9 @@ import com.bash.dash.rides.services.RideMatchingService;
 import com.bash.dash.utils.MessageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 public class DriverController {
 
     private final RideMatchingService rideMatchingService;

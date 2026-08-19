@@ -3,8 +3,9 @@ package com.bash.dash.authentication.services.impl;
 import com.bash.dash.authentication.dtos.JwtResponse;
 import com.bash.dash.authentication.dtos.RegisterDto;
 import com.bash.dash.authentication.models.*;
+import com.bash.dash.drivers.repositories.DriverProfileRepository;
+import com.bash.dash.drivers.repositories.RiderProfileRepository;
 import com.bash.dash.users.repositories.UserRepository;
-import com.bash.dash.authentication.repositories.VerificationCodeRepository;
 import com.bash.dash.authentication.services.AuthService;
 import com.bash.dash.authentication.services.JwtService;
 import com.bash.dash.domain.*;
@@ -38,7 +39,8 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final EmailService emailService;
-    private final VerificationCodeRepository codeRepository;
+    private final DriverProfileRepository driverProfileRepository;
+    private final RiderProfileRepository riderProfileRepository;
 
 
     public String getEmail(){
@@ -51,13 +53,21 @@ public class AuthServiceImpl implements AuthService {
         return userDetails.getEmail();
     }
 
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtService jwtService, EmailService emailService, VerificationCodeRepository codeRepository){
+    public AuthServiceImpl(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            JwtService jwtService,
+            EmailService emailService,
+            DriverProfileRepository driverProfileRepository,
+            RiderProfileRepository riderProfileRepository){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.emailService = emailService;
-        this.codeRepository = codeRepository;
+        this.driverProfileRepository = driverProfileRepository;
+        this.riderProfileRepository = riderProfileRepository;
     }
 
     public String register(RegisterDto body) throws MessagingException {
@@ -70,48 +80,37 @@ public class AuthServiceImpl implements AuthService {
                     return "User already has an active account";
                 }
 
-                VerificationCode verificationCode = new VerificationCode();
-                SecureRandom secureRandom = new SecureRandom();
-                String code = String.format("%06d", secureRandom.nextInt(1_000_000));
-                verificationCode.setCode(code);
-                verificationCode.setExpiry(new Date(System.currentTimeMillis() + Long.parseLong("10000")));
-                verificationCode.setEmail(body.email());
-                codeRepository.save(verificationCode);
+                String code = String.format("%06d", new SecureRandom().nextInt(1_000_000));
                 log.info("Sending email to {}", body.email());
                 emailService.send(body.email(), "Verify", "Enter this to verify your account" + code);
                 return "User already exists. Enter the code to verify account";
             }
 
-
             User user = new User();
-
-            if ("DRIVER".equals(body.role())){
-                user = new Driver();
-            }
-
-            if ("RIDER".equals(body.role())){
-                user = new Rider();
-            }
-
             user.setFirstName(body.firstName());
             user.setLastName(body.lastName());
             user.setEmail(body.email());
             user.setPassword(passwordEncoder.encode(body.password()));
             user.setPhone(body.phone());
             user.setRole(Role.valueOf(body.role()));
-            user.setDocument(body.document());
             userRepository.save(user);
+
+            if ("DRIVER".equals(body.role())){
+                DriverProfile driverProfile = new DriverProfile();
+                driverProfile.setUser(user);
+                driverProfileRepository.save(driverProfile);
+            }
+
+            if ("RIDER".equals(body.role())){
+                RiderProfile riderProfile = new RiderProfile();
+                riderProfile.setUser(user);
+                riderProfileRepository.save(riderProfile);
+            }
+
             log.info("User created");
 
-            VerificationCode verificationCode = new VerificationCode();
-            SecureRandom secureRandom = new SecureRandom();
-            String code = String.format("%06d", secureRandom.nextInt(1_000_000));
-            verificationCode.setCode(code);
-            verificationCode.setExpiry(new Date(System.currentTimeMillis() + Long.parseLong("10000")));
-            verificationCode.setEmail(body.email());
-            codeRepository.save(verificationCode);
             log.info("Sending email to {}", body.email());
-            emailService.send(body.email(), "Registration", "Enter this to verify your account " + verificationCode.getCode());
+            emailService.send(body.email(), "Registration", "Enter this to verify your account ");
 
             return "User created successfully";
         }catch (MailException e){
@@ -164,14 +163,7 @@ public class AuthServiceImpl implements AuthService {
     public ResponseEntity<MessageResponse> verify(String otpCode, String email){
 
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Error: Could not retrieve user"));
-        VerificationCode verificationCode = codeRepository.findByEmailAndCode(email, otpCode)
-                 .orElseThrow(() -> new RuntimeException("Verification code doesn't exist"));
-        if (!verificationCode.getCode().equals(otpCode)){
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("Verification code is incorrect"));
-        }
-        if (verificationCode.getExpiry().after(new Date())){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("Verification code is expired"));
-        }
+
         user.setEnabled(true);
         userRepository.save(user);
         return ResponseEntity.ok(new MessageResponse("User account enabled"));

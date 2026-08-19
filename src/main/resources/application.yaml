@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: dash
+
+  profiles:
+    active: local
+  # Custom path for Swagger UI
+  springdoc:
+    api-docs:
+      path: /v3/api-docs
+    swagger-ui:
+      path: /swagger-ui.html

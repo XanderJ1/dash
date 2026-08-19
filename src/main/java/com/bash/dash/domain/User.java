@@ -1,6 +1,5 @@
 package com.bash.dash.domain;
 
-import com.bash.dash.location.models.Location;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,7 +18,6 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String username;
     private String firstName;
     private String lastName;
     private String phone;
@@ -36,8 +34,4 @@ public class User {
     private Date createdAt;
     @Enumerated(EnumType.STRING)
     private Role role;
-    @Embedded
-    private Document document;
-    @OneToOne
-    private Location location;
 }
