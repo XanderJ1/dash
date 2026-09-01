@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -22,11 +23,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JwtService {
 
-    private String jwtSecret = "tMyZIlym68TbZcWOmBU9MDeNQDTo29QAdNBuVCC03gqnkonFJQBJJlaSoo8ktuMMUwd284cJiXc4RNkKCHbZCy";
+    @Value("${spring.sec.JWT_SECRET}")
+    private String jwtSecret;
+
+    @Value("${spring.sec.JWT_ISSUER}")
+    private String jwtIssuer;
 
     private String jwtExpirationMs = "3000000";
-
-    private String jwtIssuer = "Bashir";
 
     private Key key;
 
@@ -60,20 +63,6 @@ public class JwtService {
                 .setId(tokenId)
                 .setClaims(claims)
                 .setSubject(customUserDetails.getUsername())
-                .setIssuer(jwtIssuer)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + Long.parseLong(jwtExpirationMs)))
-                .signWith(key, SignatureAlgorithm.HS512)
-                .compact();
-    }
-
-    public String generateTokenFromEmail(String email){
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("purpose", "refresh-token");
-
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(email)
                 .setIssuer(jwtIssuer)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + Long.parseLong(jwtExpirationMs)))
@@ -137,11 +126,19 @@ public class JwtService {
         return false;
     }
 
+    private Claims parseToken(String token) {
+
+        return Jwts.parser()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
     private Key key() {
         // Use the same key initialization logic as in init()
         return this.key;
     }
-
 
     protected boolean checkAccess(String token) {
         Claims claims = Jwts.parser()
@@ -152,5 +149,4 @@ public class JwtService {
 
         return claims.get("purpose", String.class).equals("authentication");
     }
-
 }

@@ -1,7 +1,6 @@
 package com.bash.dash.authentication.dtos;
 
-import com.bash.dash.domain.Document;
-import com.bash.dash.domain.User;
+import com.bash.dash.users.domain.User;
 
 public record RegisterDto(
     String firstName,

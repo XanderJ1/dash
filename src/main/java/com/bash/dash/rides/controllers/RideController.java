@@ -1,53 +1,57 @@
 package com.bash.dash.rides.controllers;
 
 import com.bash.dash.rides.dtos.RideRequestDto;
-import com.bash.dash.rides.models.Ride;
-import com.bash.dash.rides.services.RideMatchingService;
+import com.bash.dash.rides.dtos.RideResponseDto;
+import com.bash.dash.rides.services.TripService;
+import com.bash.dash.users.services.UserService;
 import com.bash.dash.utils.MessageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/rides")
 public class RideController {
 
-    private final RideMatchingService rideMatchingService;
+    private final TripService tripService;
+    private final UserService userService;
 
-    public RideController(RideMatchingService rideMatchingService) {
-        this.rideMatchingService = rideMatchingService;
+    public RideController(TripService tripService, UserService userService) {
+        this.tripService = tripService;
+        this.userService = userService;
     }
 
     @GetMapping("")
-    public List<Ride> fetchRides(){
-        return new ArrayList<>();
+//    @PreAuthorize("hasRole('ADMIN')")
+    public List<RideResponseDto> fetchRides(){
+        return tripService.fetchRides();
     }
 
-    @GetMapping("/hello")
-    public ResponseEntity<String> hello(){
-        return ResponseEntity.ok("Hello World");
-    }
-
-    @PutMapping("")
-    public ResponseEntity<MessageResponse> updateLocation(@RequestParam Double lat, @RequestParam Double lng){
-        return ResponseEntity.ok(rideMatchingService.updateLocation(lat, lng));
+    @GetMapping("/me")
+    public List<RideResponseDto> fetchRideHistory(){
+        userService.getId();
+        return tripService.fetchMyRides();
     }
 
     @PostMapping("/request")
     public ResponseEntity<MessageResponse> requestRide(@RequestBody RideRequestDto rideRequest){
-        return ResponseEntity.ok(rideMatchingService.requestRide(rideRequest));
+        return ResponseEntity.ok(tripService.requestRide(rideRequest));
     }
 
     @PostMapping("/accept")
-    public ResponseEntity<MessageResponse> acceptRide(@RequestParam String rideId,@RequestParam boolean b){
-        return ResponseEntity.ok(rideMatchingService.acceptRide(rideId, b));
+    public ResponseEntity<MessageResponse> acceptRide(@RequestParam String rideId){
+        return ResponseEntity.ok(tripService.acceptRide(rideId));
     }
 
-    @PostMapping("/completed")
-    public ResponseEntity<MessageResponse> completeRide(@RequestParam String rideId,@RequestParam boolean b){
-        return ResponseEntity.ok(rideMatchingService.completedRide(rideId, b));
+    @PostMapping("/complete")
+    public ResponseEntity<MessageResponse> completeRide(@RequestParam String rideId){
+        return ResponseEntity.ok(tripService.completeRide(rideId));
+    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<MessageResponse> cancel(@RequestParam String rideId){
+        return ResponseEntity.ok(tripService.cancelRide(rideId));
     }
 
 }

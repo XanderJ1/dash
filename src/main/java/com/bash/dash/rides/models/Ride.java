@@ -1,8 +1,8 @@
 package com.bash.dash.rides.models;
 
-import com.bash.dash.domain.DriverProfile;
-import com.bash.dash.domain.RiderProfile;
-import com.bash.dash.location.models.Location;
+import com.bash.dash.users.domain.DriverProfile;
+import com.bash.dash.users.domain.RiderProfile;
+import com.bash.dash.location.models.GeoPoint;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,13 +23,32 @@ public class Ride {
     @JoinColumn(name = "rider_profile_id")
     private RiderProfile riderProfile;
 
-    @OneToOne
-    @JoinColumn(name = "origin_id")
-    private Location origin;
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(
+                    name = "lat",
+                    column = @Column(name = "origin_lat")
+            ),
+            @AttributeOverride(
+                    name = "lng",
+                    column = @Column(name = "origin_lng")
+            )
+    })
+    private GeoPoint origin;
 
-    @OneToOne
-    private Location destination;
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(
+                    name = "lat",
+                    column = @Column(name = "destination_lat")
+            ),
+            @AttributeOverride(
+                    name = "lng",
+                    column = @Column(name = "destination_lng")
+            )
+    })
+    private GeoPoint destinationPoint;
 
     private boolean isAvailable = true;
-    private Status status;
+    private Status status = Status.REQUESTED;
 }

@@ -1,4 +1,4 @@
-package com.bash.dash.domain;
+package com.bash.dash.users.domain;
 
 import jakarta.persistence.*;
 
@@ -9,8 +9,11 @@ public class Vehicle {
     private Long id;
 
     @OneToOne
-    private DriverProfile rider;
+    private DriverProfile driverProfile;
     private String vehicleName;
+    private String vehicleType;
+    private String vehicleColor;
+    private String modelName;
     private String licenseExpiry;
     private String licensePlate;
     private String driverId;

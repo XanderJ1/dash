@@ -1,7 +1,7 @@
 package com.bash.dash.authentication.models;
 
-import com.bash.dash.domain.Role;
-import com.bash.dash.domain.User;
+import com.bash.dash.users.domain.Role;
+import com.bash.dash.users.domain.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
@@ -25,7 +25,7 @@ public class CustomUserDetails implements UserDetails {
     private String phone;
     private String email;
     private String password;
-    private Collection<? extends GrantedAuthority> role;
+    private Role role;
     private String address;
 
 
@@ -36,7 +36,7 @@ public class CustomUserDetails implements UserDetails {
         this.phone = phone;
         this.email = email;
         this.password = password;
-        this.role = rolesMapper(role);
+        this.role = role;
     }
 
     public static CustomUserDetails build(User user){
@@ -54,11 +54,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return role;
-    }
-
-    public Collection<? extends GrantedAuthority> rolesMapper(Role role){
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return List.of(new SimpleGrantedAuthority(role.name()) );
     }
 
     @Override

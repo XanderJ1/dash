@@ -1,4 +1,4 @@
-package com.bash.dash.domain;
+package com.bash.dash.users.domain;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;

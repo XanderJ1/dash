@@ -1,4 +1,4 @@
-package com.bash.dash.domain;
+package com.bash.dash.users.domain;
 
 public enum Role {
     RIDER, DRIVER, ADMIN

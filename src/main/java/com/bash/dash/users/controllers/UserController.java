@@ -1,6 +1,6 @@
 package com.bash.dash.users.controllers;
 
-import com.bash.dash.domain.User;
+import com.bash.dash.users.domain.User;
 import com.bash.dash.users.dtos.UpdateDto;
 import com.bash.dash.users.services.UserService;
 import com.bash.dash.utils.MessageResponse;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     private final UserService userService;
@@ -20,23 +20,30 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/")
+    @GetMapping("")
     public ResponseEntity<List<User>> getAll() {
         return new ResponseEntity<>(userService.findAll(), HttpStatus.OK);
     }
 
-    @GetMapping("/id")
-    public ResponseEntity<User> getUserByEmail(@RequestBody Long id) {
+    @GetMapping("/me")
+    public ResponseEntity<User> getProfile() {
+        return new ResponseEntity<User>(userService.findMe(), HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUser(id));
     }
 
-    @PostMapping("/update")
-    public ResponseEntity<MessageResponse> update(Long id){
+    @PutMapping("/update")
+    public ResponseEntity<MessageResponse> update(UpdateDto dto, Long id){
+        return ResponseEntity.ok(userService.update(dto, id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<MessageResponse> delete(@PathVariable Long id){
         return ResponseEntity.ok(userService.delete(id));
     }
 
-    @PostMapping("/delete")
-    public ResponseEntity<MessageResponse> delete(UpdateDto dto, Long id){
-        return ResponseEntity.ok(userService.update(dto, id));
-    }
+
 }

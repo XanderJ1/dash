@@ -34,9 +34,9 @@ public class  AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/verify")
-    public ResponseEntity<MessageResponse> verify(@RequestParam String otp, @RequestParam String email){
-        return authService.verify(otp, email);
+    @GetMapping("/verify")
+    public ResponseEntity<MessageResponse> verify(@RequestParam String token) throws Forbidden {
+        return authService.verify(token);
     }
 
 }

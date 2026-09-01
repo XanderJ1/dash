@@ -1,6 +1,6 @@
 package com.bash.dash.users.repositories;
 
-import com.bash.dash.domain.User;
+import com.bash.dash.users.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

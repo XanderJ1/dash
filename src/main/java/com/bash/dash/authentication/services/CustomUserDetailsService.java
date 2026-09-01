@@ -1,6 +1,6 @@
 package com.bash.dash.authentication.services;
 
-import com.bash.dash.domain.User;
+import com.bash.dash.users.domain.User;
 import com.bash.dash.users.repositories.UserRepository;
 import com.bash.dash.authentication.models.CustomUserDetails;
 import org.springframework.security.core.userdetails.UserDetails;

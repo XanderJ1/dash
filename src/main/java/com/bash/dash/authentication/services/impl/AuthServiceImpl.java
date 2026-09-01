@@ -5,16 +5,18 @@ import com.bash.dash.authentication.dtos.RegisterDto;
 import com.bash.dash.authentication.models.*;
 import com.bash.dash.drivers.repositories.DriverProfileRepository;
 import com.bash.dash.drivers.repositories.RiderProfileRepository;
+import com.bash.dash.users.domain.DriverProfile;
+import com.bash.dash.users.domain.RiderProfile;
+import com.bash.dash.users.domain.Role;
+import com.bash.dash.users.domain.User;
 import com.bash.dash.users.repositories.UserRepository;
 import com.bash.dash.authentication.services.AuthService;
 import com.bash.dash.authentication.services.JwtService;
-import com.bash.dash.domain.*;
 import com.bash.dash.email.EmailService;
 import com.bash.dash.exceptions.Forbidden;
 import com.bash.dash.utils.MessageResponse;
 import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,7 +29,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.Date;
 import java.util.Optional;
 
 @Slf4j
@@ -99,9 +100,7 @@ public class AuthServiceImpl implements AuthService {
                 DriverProfile driverProfile = new DriverProfile();
                 driverProfile.setUser(user);
                 driverProfileRepository.save(driverProfile);
-            }
-
-            if ("RIDER".equals(body.role())){
+            }else {
                 RiderProfile riderProfile = new RiderProfile();
                 riderProfile.setUser(user);
                 riderProfileRepository.save(riderProfile);
@@ -110,7 +109,14 @@ public class AuthServiceImpl implements AuthService {
             log.info("User created");
 
             log.info("Sending email to {}", body.email());
-            emailService.send(body.email(), "Registration", "Enter this to verify your account ");
+            String token = jwtService.generateVerificationToken(body.email());
+            String verificationLink = "http://localhost:8080/api/v1/auth/verify?token=" + token;
+            emailService.send(
+                    body.email(),
+                    "Registration",
+                    "Click on this link to verify your account \n" +
+                            verificationLink
+            );
 
             return "User created successfully";
         }catch (MailException e){
@@ -137,14 +143,14 @@ public class AuthServiceImpl implements AuthService {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.info(String.valueOf(user));
+            log.info(String.valueOf(user.getEmail()));
             String token = jwtService.generateToken(authentication);
             return new JwtResponse(
                     user.getId(),
                     user.getFirstName(),
                     user.getLastName(),
-                    user.getEmail(),
                     user.getRole().name(),
+                    user.getEmail(),
                     token
             );
         }catch (BadCredentialsException ex){
@@ -159,10 +165,11 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    public ResponseEntity<MessageResponse> verify(String token){
 
-    public ResponseEntity<MessageResponse> verify(String otpCode, String email){
-
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Error: Could not retrieve user"));
+        String username = jwtService.getUsernameFromToken(token);
+        log.info("Verifying token");
+        User user = userRepository.findByEmail(username).orElseThrow(() -> new RuntimeException("Error: Could not retrieve user"));
 
         user.setEnabled(true);
         userRepository.save(user);

@@ -11,8 +11,8 @@
 	<groupId>com.bash</groupId>
 	<artifactId>Dash</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>freedom</name>
-	<description>Backend for Freedom, an e-hailng application.</description>
+	<name>dash</name>
+	<description>Backend for Dash, an e-hailng application.</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -80,6 +80,11 @@
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 
@@ -102,7 +107,16 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+    </dependencies>
 
 	<build>
 		<plugins>

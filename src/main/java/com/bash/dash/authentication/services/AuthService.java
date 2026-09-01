@@ -14,7 +14,7 @@ public interface AuthService {
     public String register(RegisterDto body) throws MessagingException;
 
     public JwtResponse login(String email, String password) throws Forbidden;
-    public ResponseEntity<MessageResponse> verify(String otpCode, String email);
+    public ResponseEntity<MessageResponse> verify(String token) throws Forbidden;
 
 
 }

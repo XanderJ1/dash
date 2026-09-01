@@ -1,8 +1,8 @@
 package com.bash.dash.config.security;
 
 import com.bash.dash.authentication.dtos.JwtResponse;
-import com.bash.dash.domain.Role;
-import com.bash.dash.domain.User;
+import com.bash.dash.users.domain.Role;
+import com.bash.dash.users.domain.User;
 import com.bash.dash.users.repositories.UserRepository;
 import com.bash.dash.authentication.services.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
