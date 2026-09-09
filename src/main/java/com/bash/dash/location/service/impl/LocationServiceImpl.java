@@ -1,6 +1,7 @@
 package com.bash.dash.location.service.impl;
 
-import com.bash.dash.authentication.models.CustomUserDetails;
+import com.bash.dash.config.DriverLocationWebSocketService;
+import com.bash.dash.config.MessageQueueConfig;
 import com.bash.dash.drivers.repositories.DriverProfileRepository;
 import com.bash.dash.rides.models.Ride;
 import com.bash.dash.rides.models.Status;
@@ -15,15 +16,11 @@ import com.bash.dash.users.repositories.UserRepository;
 import com.bash.dash.users.services.UserService;
 import com.bash.dash.utils.MessageResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -34,25 +31,28 @@ public class LocationServiceImpl implements LocationService {
     private final RideRepository rideRepository;
     private final UserRepository userRepository;
     private final UserService userService;
-    public LocationServiceImpl(LocationRepository locationRepository, DriverProfileRepository driverProfileRepository, RideRepository rideRepository, UserRepository userRepository, UserService userService) {
+    private final DriverLocationWebSocketService sendDriverLocation;
+    public LocationServiceImpl(LocationRepository locationRepository, DriverProfileRepository driverProfileRepository, RideRepository rideRepository, UserRepository userRepository, UserService userService, DriverLocationWebSocketService sendDriverLocation) {
         this.locationRepository = locationRepository;
         this.driverProfileRepository = driverProfileRepository;
         this.rideRepository = rideRepository;
         this.userRepository = userRepository;
         this.userService = userService;
+        this.sendDriverLocation = sendDriverLocation;
     }
 
     public Long getId(){
         return userService.getId();
     }
 
-    @Cacheable(value = "location",key = "#rideId")
-    public DriverLocation driverLocation(UUID rideId){
-        Ride ride = rideRepository.findById(rideId)
-                .orElseThrow(() -> new RuntimeException("Ride with id: " + rideId + " not found"));
-
-        return locationRepository.findById(ride.getDriverProfile().getId())
-                .orElseThrow(() -> new RuntimeException("Ride with id: " + rideId + " not found"));
+    @Cacheable(key = "#driverId", value = "location")
+    public DriverLocation driverLocation(Long driverId){
+        System.out.println("driverId: " + driverId  );
+        User user = userRepository.findById(driverId).orElseThrow(() -> new RuntimeException("Driver does not exist"));
+        log.info(String.valueOf(user.getDriverProfile() != null));
+        DriverProfile driver = user.getDriverProfile();
+        return locationRepository.findById(driver.getId())
+                .orElseThrow(() -> new RuntimeException("Location of Driver does not exist"));
     }
 
     @Override
@@ -70,15 +70,19 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public MessageResponse updateLocation(Double lat, Double lng) {
+    @CacheEvict(key = "@userService.getId()", value = "location")
+    public MessageResponse updateLocation(Double lat, Double lng, Long driverId) {
 
-        User user = userRepository.findById(getId()).orElseThrow(() -> new RuntimeException("User not found"));
-        DriverLocation driverLocation = new DriverLocation(user.getId(), new GeoPoint(lat, lng));
+        DriverLocation driverLocation = new DriverLocation(driverId, new GeoPoint(lat, lng));
         driverLocation.setUpdatedAt(Instant.now());
         log.info(driverLocation.toString());
         locationRepository.save(driverLocation);
+
+        sendDriverLocation.sendDriverLocation(
+                driverId,
+                lat,
+                lng
+        );
         return new MessageResponse("User location updated");
     }
 }
-
-

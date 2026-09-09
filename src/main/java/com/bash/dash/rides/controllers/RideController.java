@@ -15,11 +15,9 @@ import java.util.List;
 public class RideController {
 
     private final TripService tripService;
-    private final UserService userService;
 
-    public RideController(TripService tripService, UserService userService) {
+    public RideController(TripService tripService) {
         this.tripService = tripService;
-        this.userService = userService;
     }
 
     @GetMapping("")
@@ -28,9 +26,8 @@ public class RideController {
         return tripService.fetchRides();
     }
 
-    @GetMapping("/me")
+    @GetMapping("/history")
     public List<RideResponseDto> fetchRideHistory(){
-        userService.getId();
         return tripService.fetchMyRides();
     }
 

@@ -17,7 +17,12 @@ public class MessageQueueConfig {
 
     @Bean
     public Queue driverLocationQueue() {
-        return new Queue("LocationQueue");
+        return new Queue("locationQueue");
+    }
+
+    @Bean
+    public Queue rideQueue() {
+        return new Queue("rideQueue");
     }
 
     @Bean
