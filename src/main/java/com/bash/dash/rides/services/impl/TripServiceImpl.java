@@ -116,6 +116,7 @@ public class TripServiceImpl implements TripService {
         driverProfile.setAvailable(false);
         rideRepository.save(ride);
         // TODO: Start tracking the driver
+        log.info("Sending ride to queue");
         RideMessage rideMessage = new RideMessage(
                 rideId, driver.getId(), ride.getStatus(),
                 ride.getRiderProfile().getId()

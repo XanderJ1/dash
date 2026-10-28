@@ -1,9 +1,11 @@
 package com.bash.dash.messaging;
 
 import com.bash.dash.messaging.dtos.RideMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class RideProducer {
 
@@ -15,6 +17,7 @@ public class RideProducer {
 
     public void sendMessage(RideMessage rideMessage) {
 
+        log.info("Sending ride to queue");
         rabbitTemplate.convertAndSend("rideQueue", rideMessage);
     }
 

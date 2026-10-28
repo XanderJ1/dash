@@ -70,7 +70,7 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    @CacheEvict(key = "@userService.getId()", value = "location")
+    @CacheEvict(key = "#driverId", value = "location")
     public MessageResponse updateLocation(Double lat, Double lng, Long driverId) {
 
         DriverLocation driverLocation = new DriverLocation(driverId, new GeoPoint(lat, lng));
